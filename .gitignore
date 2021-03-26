@@ -37,3 +37,6 @@ vignettes/*.pdf
 
 # R Environment Variables
 .Renviron
+
+# Used data can be very large, don't store it in the repository.
+data/**/*
