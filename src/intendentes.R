@@ -1,11 +1,12 @@
+library(dplyr)
+library(rstatix)
 
 #' Calculates the general perfomance of the ANR in the mayor elections for each
 #' year available in the dataset.
 #'
 #' This functions expects that the results dataframe only corresponds to the
 #' election of mayors.
-general_performance_mayors <- function(results) {
-    election_results <- results
+mayor_general_performance <- function(election_results) {
 
     # Calculates the total number of votes casted in favor of each party in each
     # election.
@@ -15,8 +16,8 @@ general_performance_mayors <- function(results) {
 
     # Sort votes by year (asc) and number of votes (des), so as to make it
     # easier to get the top parties in each election year.
-    votes_per_party <- votes_per_party[order(votes_per_party$anio,
-                                            -votes_per_party$votos), ]
+    #' votes_per_party <- votes_per_party[order(votes_per_party$anio,
+    #'                                        -votes_per_party$votos), ]
 
     # Fitlers the top 2 parties for each election year.
     # ' most_voted_parties <- by(votes_per_party,
@@ -49,4 +50,26 @@ general_performance_mayors <- function(results) {
     anr_votes$vote_share <- anr_votes$votos / total_votes$total_votos
 
     print(anr_votes)
+}
+
+#' Runs yearly pairwise comparisons of the mean of vote shares per district.
+#'
+#' This functions expects that the results dataframe only corresponds to the
+#' election of mayors.
+mayor_pwc_vote_share_per_year <- function(election_results) {
+  votes_per_party <- election_results %>%
+                      group_by(anio, disdes, siglas_lista) %>%
+                      summarise(votos = sum(votos),
+                                total_votos = sum(total_votos),
+                                .groups = "drop") %>%
+                      mutate(vote_share = votos / total_votos)
+
+  anr_results <- votes_per_party %>%
+                   filter(siglas_lista == "ANR", !is.na(vote_share))
+
+  # Pairwise comparisons over the years.
+  pwc <- anr_results %>%
+           tukey_hsd(vote_share ~ as.factor(anio))
+
+  print(pwc)
 }

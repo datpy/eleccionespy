@@ -9,21 +9,6 @@ results <- subset(results, select = -c(depdes, zondes, locdes,
 colnames(results)[1] <- "anio"
 
 mayor_results <- results[results$cand_desc == "INTENDENTE", ]
-general_performance_mayors(mayor_results)
 
-
-#'
-# Results for ANR.
-#
-# anr_results <- results[results$siglas_lista == "ANR", ]
-# years <- unique(results$anio)
-# anr_props <- list()
-
-# for (i in 1:length(years)) {
-#     anr_props[[i]] <- as.vector(results[results$anio == years[i], ]$prop_votos)
-# }
-
-# # Test two-sample difference in means between the proportion of votes in first
-# # and last municipal elections.
-# t.test(anr_props[[1]], anr_props[[length(anr_props)]],
-#         alternative = "two.sided", paired = FALSE, conf.level = 0.95)
+mayor_general_performance(mayor_results)
+mayor_pwc_vote_share_per_year(mayor_results)
