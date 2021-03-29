@@ -1,6 +1,8 @@
 library(dplyr)
 library(rstatix)
 
+source("./src/common/common.R")
+
 #' Calculates the general perfomance of the ANR in the mayor elections for each
 #' year available in the dataset.
 #'
@@ -25,7 +27,7 @@ mayor_general_performance <- function(election_results) {
 
   # Calculates the ANR general performance over the years.
   anr_votes <- votes_per_party %>%
-                 filter(siglas_lista == "ANR") %>%
+                 dplyr::filter(siglas_lista == "ANR") %>%
                  mutate(total_votos = total_votes$total_votos,
                         vote_share = votos / total_votes$total_votos)
 
@@ -46,7 +48,7 @@ mayor_pwc_voteshare_per_year <- function(election_results) {
                        mutate(vote_share = votos / total_votos)
 
   anr_results <- votes_per_party %>%
-                   filter(siglas_lista == "ANR", !is.na(vote_share))
+                   dplyr::filter(siglas_lista == "ANR", !is.na(vote_share))
 
   # Pairwise comparisons over the years.
   pwc <- anr_results %>%
@@ -55,11 +57,24 @@ mayor_pwc_voteshare_per_year <- function(election_results) {
   print(pwc)
 }
 
+#' Calculates the average vote share for the ANR per district. Then, it takes
+#' the mean of the vote shares grouping by department.
+mayor_avg_voteshare_per_dep <- function(election_results) {
+  results <- election_results %>%
+               dplyr::filter(siglas_lista == "ANR")
+
+  avg_voteshare_per_dep(results)
+}
+
+#' Calculates the average change in vote share for the ANR per district.
+#'
+#' This functions expects that the results dataframe only corresponds to the
+#' election of mayors.
 mayor_delta_voteshare_per_city <- function(election_results) {
   # Obtains election results per districct and year for ANR and calculates the
   # vote share.
   anr_results <- election_results %>%
-                   filter(siglas_lista == "ANR") %>%
+                   dplyr::filter(siglas_lista == "ANR") %>%
                    group_by(anio, depdes, disdes) %>%
                    summarise(votos = sum(votos),
                              total_votos = sum(total_votos),
@@ -78,8 +93,8 @@ mayor_delta_voteshare_per_city <- function(election_results) {
   anr_results <- anr_results %>%
                    arrange(depdes, disdes) %>%
                    group_by(depdes, disdes) %>%
-                   filter(n() > 2) %>%
-                   mutate(delta = lag(vote_share) - vote_share)
+                   dplyr::filter(n() > 2) %>%
+                   mutate(delta = dplyr::lag(vote_share) - vote_share)
 
   # Save the change in vote share per year and district.
   anr_results %>%
@@ -89,7 +104,7 @@ mayor_delta_voteshare_per_city <- function(election_results) {
   # Runs a simple model in which, for each district, we take the average change
   # in vote share over the years.
   anr_results <- anr_results %>%
-                   filter(!is.na(delta))  %>%
+                   dplyr::filter(!is.na(delta))  %>%
                    group_by(depdes, disdes) %>%
                    summarise(avg_delta = mean(delta))
 
