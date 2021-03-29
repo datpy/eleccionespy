@@ -22,4 +22,7 @@ graph_voteshare_vs_income <- function(data, title, xlab, ylab) {
                        labels = paste0(seq(30, 60, 5), "%")) +
     theme_electionspy()
 
+  ggsave("./graphs/avg_voteshare_per_dep-vs-income.png",
+          width = 7, height = 7, dpi = 300)
+
 }

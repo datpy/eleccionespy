@@ -28,7 +28,7 @@ anr_results <- mayor_avg_voteshare_per_dep(mayor_results) %>%
                  left_join(income, c("dep" = "dep")) %>%
                  mutate(ingresos = ingresos / 1000000)
 
-title <- "Departamentos: Porcentaje de votos vs. Promedio de ingresos"
+title <- "Promedio de porcentaje de votos vs. Promedio de ingresos"
 xlab <- "Promedio de ingresos en 2017 (en millones de Gs.)"
 ylab <- "Promedio de porcentaje de votos (1996 - 2015)"
-print(graph_voteshare_vs_income(anr_results, title, xlab, ylab))
+graph_voteshare_vs_income(anr_results, title, xlab, ylab)
