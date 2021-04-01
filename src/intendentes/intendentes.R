@@ -66,6 +66,15 @@ mayor_avg_voteshare_per_dep <- function(election_results) {
   avg_voteshare_per_dep(results)
 }
 
+mayor_voteshare_per_dep <- function(election_results) {
+  anr_results <- election_results %>%
+                   dplyr::filter(siglas_lista == "ANR", anio == 2015) %>%
+                   group_by(dep, depdes) %>%
+                   summarise(votos = sum(votos),
+                             total_votos = sum(total_votos),
+                             vote_share = votos / total_votos * 100)
+}
+
 #' Calculates the average change in vote share for the ANR per district.
 #'
 #' This functions expects that the results dataframe only corresponds to the

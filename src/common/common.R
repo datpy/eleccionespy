@@ -15,5 +15,5 @@ avg_voteshare_per_dep <- function(election_results) {
   # department.
   results <- results %>%
                group_by(dep, depdes) %>%
-               summarise(avg_share = mean(vote_share), .groups = "drop")
+               summarise(vote_share = mean(vote_share), .groups = "drop")
 }

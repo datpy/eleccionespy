@@ -24,11 +24,15 @@ mayor_results <- election_results %>%
 #' mayor_pwc_voteshare_per_year(mayor_results)
 #' mayor_delta_voteshare_per_city(mayor_results)
 
-anr_results <- mayor_avg_voteshare_per_dep(mayor_results) %>%
+#' anr_results <- mayor_avg_voteshare_per_dep(mayor_results)
+anr_results <- mayor_voteshare_per_dep(mayor_results)
+
+anr_results <- anr_results %>%
                  left_join(income, c("dep" = "dep")) %>%
                  mutate(ingresos = ingresos / 1000000)
 
-title <- "Promedio de porcentaje de votos vs. Promedio de ingresos"
+title <- "Porcentaje de votos vs. Promedio de ingresos"
 xlab <- "Promedio de ingresos en 2017 (en millones de Gs.)"
-ylab <- "Promedio de porcentaje de votos (1996 - 2015)"
-graph_voteshare_vs_income(anr_results, title, xlab, ylab)
+ylab <- "Porcentaje de votos (2015)"
+saved_to <- "./graphs/2015-voteshare_per_dep-vs-income.png"
+graph_voteshare_vs_income(anr_results, title, xlab, ylab, saved_to)
