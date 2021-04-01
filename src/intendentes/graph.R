@@ -6,7 +6,7 @@ source("./src/common/graph.R")
 # Graphs a scatterplot between vote share (in percentage) and income.
 graph_voteshare_vs_income <- function(data, title, xlab, ylab, saved_to) {
 
-  ggplot(data, aes(ingresos, vote_share)) +
+  ggplot(data, aes(income, vote_share)) +
     geom_point(size = 2, shape = 1) +
     geom_text_repel(aes(label = depdes), size = 3) +
     geom_smooth(method = lm, se = FALSE, formula = y ~ x,
