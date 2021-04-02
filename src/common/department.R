@@ -30,6 +30,6 @@ share_per_dep <- function(election_results) {
     group_by(dep, depdes) %>%
     summarise(votos = sum(votos),
               total_votos = sum(total_votos),
-              vote_share = votos / total_votos * 100) %>%
-    print()
+              vote_share = votos / total_votos * 100,
+              .groups = "drop")
 }

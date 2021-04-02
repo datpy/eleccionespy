@@ -1,5 +1,6 @@
 source("./src/common/department.R")
 source("./src/intendentes/countrywise.R")
+source("./src/intendentes/departmentwise.R")
 source("./src/intendentes/districtwise.R")
 source("./src/intendentes/graph.R")
 
@@ -7,7 +8,7 @@ anr_mayor_statistics <- function(election_results, income) {
   basepath <- "./data/output/"
 
   mayor_results <- election_results %>%
-                    filter(cand_desc == "INTENDENTE")
+                    filter(cand_desc == "INTENDENTE", siglas_lista == "ANR")
 
   #' anr_mayor_general_performance(mayor_results)
   #' anr_mayor_district_comp(election_results, basepath)
@@ -24,15 +25,29 @@ anr_graph_results_vs_income <- function(mayor_results, income) {
 
   mayor_results %>%
     anr_mayor_share_per_dep(2015) %>%
-    make_vs_income_graph(income, title, xlab, ylab, saved_to)
+    make_vs_income_graph(income, title, xlab, ylab, saved_to,
+                         graph_voteshare_vs_income)
+
+  ###
+  ### Not statistically significant results.
+  ###
+  #' title <- "Promedio de cambio vs. Promedio de ingresos"
+  #' ylab <- "Promedio de cambio de porcentaje de votos (intendencia)"
+  #' saved_to <- "./graphs/delta_voteshare_per_dep-vs-income.png"
+  #' mayor_results %>%
+  #'   mayor_delta_voteshare_per_dep("ANR") %>%
+  #'   make_vs_income_graph(income, title, xlab, ylab, saved_to,
+  #'                        graph_deltashare_vs_income)
 }
 
-make_vs_income_graph <- function(results, income, title, xlab, ylab, saved_to) {
+make_vs_income_graph <- function(results, income, title, xlab, ylab,
+                                 saved_to, fn) {
   results %>%
     left_join(income, c("dep" = "dep")) %>%
     mutate(income = ingresos / 1000000) %>%
     select(-ingresos) %>%
-    graph_voteshare_vs_income(title, xlab, ylab, saved_to)
+    print() %>%
+    fn(title, xlab, ylab, saved_to)
 }
 
 # Runs analysis on the ANR's general performance accross the country.
@@ -65,8 +80,7 @@ anr_mayor_avgshare_per_dep <- function(election_results) {
 
 #' Calculates the vote share per department for the ANR over all the years.
 anr_mayor_share_per_dep <- function(election_results, year = NULL) {
-  anr_results <- election_results %>%
-                   dplyr::filter(siglas_lista == "ANR", anio == year)
+  anr_results <- election_results
 
   if (!is.null(year)) {
     anr_results <- anr_results %>%

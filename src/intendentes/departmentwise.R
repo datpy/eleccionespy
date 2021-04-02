@@ -1,35 +1,36 @@
-library(dplyr)
-library(tidyr)
 
+#' Calculates the average change in vote share per department for a particular
+#' party.
+#'
 #' Calculates the average change in vote share per district for a particular
 #' party.
-mayor_delta_voteshare_per_city <- function(election_results, party) {
+mayor_delta_voteshare_per_dep <- function(election_results, party) {
   if (is.null(party)) {
     stop("party must be specified")
   }
 
-  # Obtains a party's election results per district and year and calculates the
-  # vote share.
+  # Obtains a party's election results per department and year and calculates
+  # the vote share.
   party_results <- election_results %>%
                    dplyr::filter(siglas_lista == party) %>%
-                   group_by(anio, depdes, disdes) %>%
+                   group_by(anio, dep, depdes) %>%
                    summarise(votos = sum(votos),
                              total_votos = sum(total_votos),
-                             .groups = "drop") %>%
+                             .groups = "keep") %>%
                    mutate(vote_share = votos / total_votos * 100)
 
-  # Group the results by district in order to add a change in vote share between
-  # 2 consecutive years.
+  # Group the results by department in order to add a change in vote share
+  # between 2 consecutive years.
   #
-  # Arranging by disdes is needed since lag only works using the previous row,
+  # Arranging by dep is needed since lag only works using the previous row,
   # and we want to take the difference in vote share between 2 consecutive years
   # for the same district.
   #
   # The row with the base case (first election for a district) gets a NA for
   # delta
   party_results <- party_results %>%
-                     arrange(depdes, disdes) %>%
-                     group_by(depdes, disdes) %>%
+                     arrange(dep) %>%
+                     group_by(dep) %>%
                      dplyr::filter(n() > 2) %>%
                      mutate(delta = vote_share - dplyr::lag(vote_share)) %>%
                      select(-votos, -total_votos, -vote_share)
