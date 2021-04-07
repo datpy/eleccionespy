@@ -23,7 +23,8 @@ theme_electionspy <- function() {
   )
 }
 
-scatter <- function(data = NULL, mapping = aes(), title, xlab, ylab, saved_to) {
+scatter <- function(data = NULL, mapping = aes(), title = "", xlab = "",
+                    ylab = "", saved_to) {
 
   ggplot(data, mapping) +
     geom_point(size = 2, shape = 1) +

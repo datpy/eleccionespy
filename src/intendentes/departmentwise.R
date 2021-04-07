@@ -1,3 +1,4 @@
+source("./src/intendentes/districtwise.R")
 
 #' Calculates the average change in vote share per department for a particular
 #' party.
@@ -46,4 +47,9 @@ mayor_delta_voteshare_per_dep <- function(election_results, party) {
                      spread(anio, delta) %>%
                      ungroup() %>%
                      mutate(avg_delta = avg_delta$avg_delta)
+}
+
+mayor_ncandidates_per_dep <- function(election_results) {
+  dist_result <- election_results %>%
+                   ncandidates_per_district()
 }

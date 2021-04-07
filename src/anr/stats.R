@@ -3,16 +3,22 @@ source("./src/intendentes/countrywise.R")
 source("./src/intendentes/departmentwise.R")
 source("./src/intendentes/districtwise.R")
 source("./src/intendentes/graph.R")
+source("./src/common/graph.R")
 
 anr_mayor_statistics <- function(election_results, income) {
-  basepath <- "./data/output/"
+  #' basepath <- "./data/output/"
 
   mayor_results <- election_results %>%
-                    filter(cand_desc == "INTENDENTE", siglas_lista == "ANR")
+                     dplyr::filter(cand_desc == "INTENDENTE")
+
+  anr_mayor_results <- mayor_results %>%
+                         dplyr::filter(siglas_lista == "ANR")
 
   #' anr_mayor_general_performance(mayor_results)
   #' anr_mayor_district_comp(election_results, basepath)
-  anr_graph_results_vs_income(mayor_results, income)
+  anr_graph_results_vs_income(anr_mayor_results, income)
+
+  number_candidates_per_district(mayor_results, 2015)
 }
 
 # Generates graphs comparing department-wise election results and income.
@@ -46,7 +52,6 @@ make_vs_income_graph <- function(results, income, title, xlab, ylab,
     left_join(income, c("dep" = "dep")) %>%
     mutate(income = ingresos / 1000000) %>%
     select(-ingresos) %>%
-    print() %>%
     fn(title, xlab, ylab, saved_to)
 }
 
@@ -89,4 +94,25 @@ anr_mayor_share_per_dep <- function(election_results, year = NULL) {
 
   anr_results %>%
     share_per_dep()
+}
+
+#' Calculates the average number of candidates per distrcit, aggregated by
+#' department.
+number_candidates_per_district <- function(election_results, year = NULL) {
+  results <- election_results %>%
+               ncandidates_per_district(5)
+  #' print(results)
+  results <- election_results %>%
+               diff_voteshare("ANR") %>%
+               left_join(results,
+                         c("anio" = "anio", "dep" = "dep", "depdes" = "depdes",
+                           "disdes" = "disdes"))
+
+  linear_mod <- lm(win ~ n_candidates + n_rel_candidates, data = results)
+  print(summary(linear_mod))
+
+  linear_mod <- lm(share_diff ~ n_candidates + n_rel_candidates, data = results)
+  print(summary(linear_mod))
+
+  #' scatter(results, aes(n_rel_candidates, share_diff), saved_to = "test")
 }

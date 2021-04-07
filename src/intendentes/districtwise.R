@@ -46,3 +46,60 @@ mayor_delta_voteshare_per_city <- function(election_results, party) {
                      ungroup() %>%
                      mutate(avg_delta = avg_delta$avg_delta)
 }
+
+#' Calculates the number of candidates in a specific district.
+#'
+#' It returns two counters:n_candidates:
+#' 1) n_candidates is the total number of candidates.
+#' 2) n_rel_candidates is the number of candidates that got a share of votes
+#' above the threshold.
+ncandidates_per_district <- function(election_results, rel_threshold = 5) {
+  election_results %>%
+    group_by(anio, dep, depdes, disdes, siglas_lista) %>%
+    summarise(votos = sum(votos),
+              total_votos = sum(total_votos),
+              .groups = "drop_last") %>%
+    mutate(vote_share = votos / total_votos * 100) %>%
+    summarise(n_candidates = n(),
+              vote_share = vote_share,
+              .groups = "keep") %>%
+    filter(vote_share > rel_threshold) %>%
+    summarise(n_rel_candidates = n(),
+              n_candidates = n_candidates,
+              .groups = "keep") %>%
+    slice_head()
+}
+
+#' Gets the difference in vote share with respect to the other popular party.
+diff_voteshare <- function(election_results, ref_party) {
+  # Get the two top parties in an election.
+  # Filter those elections in which the ref_party was not among the two top
+  # candidates.
+  results <- election_results %>%
+               group_by(anio, dep, depdes, disdes, siglas_lista) %>%
+               summarise(votos = sum(votos),
+                         total_votos = sum(total_votos),
+                         .groups = "drop_last") %>%
+               top_n(2, votos) %>%
+               dplyr::filter(any(siglas_lista == ref_party)) %>%
+               mutate(vote_share = votos / total_votos * 100)
+
+  # TODO: Find a better way to place the ref_party at the top of the group
+  # Change the siglas_lista of the ref party to "A", so that it can be placed
+  # at the top of its group when sorting.
+  results <- results %>%
+               mutate(siglas_lista = if_else(siglas_lista == ref_party,
+                                             "A", siglas_lista)) %>%
+               arrange(siglas_lista, .by_group = TRUE)
+
+  # Gets the difference between vote shares among the two top contestants.
+  results <- results %>%
+    select(-votos, -total_votos) %>%
+    summarise(share_diff = dplyr::lag(vote_share) - vote_share,
+              .groups = "drop") %>%
+    filter(!is.na(share_diff))
+
+  # Create a win variable if the ref_party won the election.
+  results %>%
+    mutate(win = share_diff > 0)
+}
