@@ -49,7 +49,45 @@ mayor_delta_voteshare_per_dep <- function(election_results, party) {
                      mutate(avg_delta = avg_delta$avg_delta)
 }
 
-mayor_ncandidates_per_dep <- function(election_results) {
-  dist_result <- election_results %>%
-                   ncandidates_per_district()
+# Aggregates the total number of votes per district.
+votes_per_dep <- function(election_results) {
+  election_results %>%
+    votes_per_district %>%
+    group_by(anio, dep, depdes) %>%
+    summarise(total_votos = sum(total_votos),
+              .groups = "drop")
+}
+
+#' Gets the difference in vote share with respect to the other popular party.
+diff_voteshare_per_dep <- function(election_results, ref_party) {
+  # Get the two top parties in an election.
+  # Filter those elections in which the ref_party was not among the two top
+  # candidates.
+  results <- election_results %>%
+               group_by(anio, dep, depdes, siglas_lista) %>%
+               summarise(votos = sum(votos),
+                         total_votos = sum(total_votos),
+                         .groups = "drop_last") %>%
+               top_n(2, votos) %>%
+               dplyr::filter(any(siglas_lista == ref_party)) %>%
+               mutate(vote_share = votos / total_votos * 100)
+
+  # TODO: Find a better way to place the ref_party at the top of the group
+  # Change the siglas_lista of the ref party to "A", so that it can be placed
+  # at the top of its group when sorting.
+  results <- results %>%
+               mutate(siglas_lista = if_else(siglas_lista == ref_party,
+                                             "A", siglas_lista)) %>%
+               arrange(siglas_lista, .by_group = TRUE)
+
+  # Gets the difference between vote shares among the two top contestants.
+  results <- results %>%
+    select(-votos, -total_votos) %>%
+    summarise(share_diff = dplyr::lag(vote_share) - vote_share,
+              .groups = "drop") %>%
+    filter(!is.na(share_diff))
+
+  # Create a win variable if the ref_party won the election.
+  results %>%
+    mutate(win = share_diff > 0)
 }

@@ -71,7 +71,7 @@ ncandidates_per_district <- function(election_results, rel_threshold = 5) {
 }
 
 #' Gets the difference in vote share with respect to the other popular party.
-diff_voteshare <- function(election_results, ref_party) {
+diff_voteshare_per_district <- function(election_results, ref_party) {
   # Get the two top parties in an election.
   # Filter those elections in which the ref_party was not among the two top
   # candidates.
@@ -111,7 +111,7 @@ voters_per_district <- function(electoral_roll) {
     summarise(eligible_voters = sum(eligible_voters), .groups = "drop")
 }
 
-# Aggregates the total number of eligible voters per district.
+# Aggregates the total number of votes per district.
 votes_per_district <- function(election_results) {
   election_results %>%
     group_by(anio, dep, depdes, disdes, zon, loc) %>%

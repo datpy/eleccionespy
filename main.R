@@ -35,7 +35,7 @@ roll <- read_csv(file = "./data/padron-1998-2018.csv",
 # Import income information.
 income <- read_csv(file = "./data/ingresos-promedios-2017.csv") %>%
             select(-anio, -depdes) %>%
-            rename(ingresos = ingresos_act_principal)
-
+            rename(income = ingresos_act_principal) %>%
+            mutate(income = income / 1000000)
 
 anr_mayor_statistics(election_results, roll, income)

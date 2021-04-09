@@ -18,21 +18,18 @@ anr_mayor_statistics <- function(election_results, electoral_roll, income) {
                          dplyr::filter(siglas_lista == "ANR")
 
   #' Use electoral roll for the general elections as proxy for the local ones.
-  #' 2003 -> 2001
-  #' 2008 -> 2005
-  #' 2013 -> 2010
   #' 2018 -> 2015
   electoral_roll <- electoral_roll %>%
-                      dplyr::filter(anio > 1998) %>%
+                      dplyr::filter(anio == 2018) %>%
                       voters_per_district() %>%
-                      mutate(anio = anio - 3) %>%
-                      mutate(anio = if_else(anio == 2000, 2001, anio))
+                      mutate(anio = anio - 3)
 
   #' anr_mayor_general_performance(mayor_results)
   #' anr_mayor_district_comp(election_results, basepath)
   #' anr_graph_results_vs_income(anr_mayor_results, income)
 
-  district_level_model(mayor_results, electoral_roll, income)
+  #' district_level_model(mayor_results, electoral_roll)
+  dep_level_model(mayor_results, electoral_roll, income)
 }
 
 # Generates graphs comparing department-wise election results and income.
@@ -110,6 +107,36 @@ anr_mayor_share_per_dep <- function(election_results, year = NULL) {
     share_per_dep()
 }
 
+#' Creates a statistical model for datapoints at the department level.
+#'
+#' This function expects that the election results and electoral roll are from
+#' a specific year.
+dep_level_model <- function(election_results, electoral_roll, income) {
+  anr_mayor_results <- election_results %>%
+                         dplyr::filter(siglas_lista == "ANR")
+
+  electoral_roll <- electoral_roll %>%
+                      group_by(dep, depdes) %>%
+                      summarise(eligible_voters = sum(eligible_voters),
+                                .groups = "drop")
+
+  tb <- anr_mayor_results %>%
+          anr_mayor_share_per_dep()
+
+  tb <- tb %>%
+          inner_join(electoral_roll, c("dep" = "dep", "depdes" = "depdes")) %>%
+          mutate(turnout = total_votos / eligible_voters * 100)
+
+  tb <- tb %>%
+          inner_join(income, c("dep" = "dep"))
+
+  linear_mod <- lm(vote_share ~ income + turnout,
+                   data = tb)
+  print(summary(linear_mod))
+
+  #' scatter(tb, aes(turnout, vote_share), saved_to = "test")
+}
+
 #' Creates a statistical model for datapoints at the district level.
 #'
 #' TODO: Think of obtainable variables to add to the model. The current ones are
@@ -119,7 +146,7 @@ district_level_model <- function(election_results, electoral_roll) {
                ncandidates_per_district(5)
 
   results <- election_results %>%
-               diff_voteshare("ANR") %>%
+               diff_voteshare_per_district("ANR") %>%
                inner_join(results,
                           c("anio" = "anio", "dep" = "dep", "depdes" = "depdes",
                            "disdes" = "disdes"))
