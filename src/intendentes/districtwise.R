@@ -103,3 +103,20 @@ diff_voteshare <- function(election_results, ref_party) {
   results %>%
     mutate(win = share_diff > 0)
 }
+
+# Aggregates the total number of eligible voters per district.
+voters_per_district <- function(electoral_roll) {
+  electoral_roll %>%
+    group_by(anio, dep, depdes, disdes) %>%
+    summarise(eligible_voters = sum(eligible_voters), .groups = "drop")
+}
+
+# Aggregates the total number of eligible voters per district.
+votes_per_district <- function(election_results) {
+  election_results %>%
+    group_by(anio, dep, depdes, disdes, zon, loc) %>%
+    slice_head() %>%
+    group_by(anio, dep, depdes, disdes) %>%
+    summarise(total_votos = sum(total_votos),
+              .groups = "drop")
+}

@@ -5,20 +5,34 @@ source("./src/intendentes/districtwise.R")
 source("./src/intendentes/graph.R")
 source("./src/common/graph.R")
 
-anr_mayor_statistics <- function(election_results, income) {
+anr_mayor_statistics <- function(election_results, electoral_roll, income) {
   #' basepath <- "./data/output/"
 
+  # Data on electoral roll is only availables since 1998, so remove the ones
+  # before.
   mayor_results <- election_results %>%
-                     dplyr::filter(cand_desc == "INTENDENTE")
+                     dplyr::filter(cand_desc == "INTENDENTE",
+                                   anio == 2015)
 
   anr_mayor_results <- mayor_results %>%
                          dplyr::filter(siglas_lista == "ANR")
 
+  #' Use electoral roll for the general elections as proxy for the local ones.
+  #' 2003 -> 2001
+  #' 2008 -> 2005
+  #' 2013 -> 2010
+  #' 2018 -> 2015
+  electoral_roll <- electoral_roll %>%
+                      dplyr::filter(anio > 1998) %>%
+                      voters_per_district() %>%
+                      mutate(anio = anio - 3) %>%
+                      mutate(anio = if_else(anio == 2000, 2001, anio))
+
   #' anr_mayor_general_performance(mayor_results)
   #' anr_mayor_district_comp(election_results, basepath)
-  anr_graph_results_vs_income(anr_mayor_results, income)
+  #' anr_graph_results_vs_income(anr_mayor_results, income)
 
-  number_candidates_per_district(mayor_results, 2015)
+  district_level_model(mayor_results, electoral_roll, income)
 }
 
 # Generates graphs comparing department-wise election results and income.
@@ -96,23 +110,38 @@ anr_mayor_share_per_dep <- function(election_results, year = NULL) {
     share_per_dep()
 }
 
-#' Calculates the average number of candidates per distrcit, aggregated by
-#' department.
-number_candidates_per_district <- function(election_results, year = NULL) {
+#' Creates a statistical model for datapoints at the district level.
+#'
+#' TODO: Think of obtainable variables to add to the model. The current ones are
+#' not good at all to explain variance.
+district_level_model <- function(election_results, electoral_roll) {
   results <- election_results %>%
                ncandidates_per_district(5)
-  #' print(results)
+
   results <- election_results %>%
                diff_voteshare("ANR") %>%
-               left_join(results,
-                         c("anio" = "anio", "dep" = "dep", "depdes" = "depdes",
+               inner_join(results,
+                          c("anio" = "anio", "dep" = "dep", "depdes" = "depdes",
                            "disdes" = "disdes"))
 
-  linear_mod <- lm(win ~ n_candidates + n_rel_candidates, data = results)
+  results <- results %>%
+               inner_join(electoral_roll,
+                          c("anio" = "anio", "dep" = "dep", "depdes" = "depdes",
+                           "disdes" = "disdes"))
+
+  results <- results %>%
+               inner_join(votes_per_district(election_results),
+                          c("anio" = "anio", "dep" = "dep", "depdes" = "depdes",
+                           "disdes" = "disdes")) %>%
+                mutate(turnout = total_votos / eligible_voters * 100)
+
+  linear_mod <- lm(win ~ n_candidates + n_rel_candidates + turnout,
+                   data = results)
   print(summary(linear_mod))
 
-  linear_mod <- lm(share_diff ~ n_candidates + n_rel_candidates, data = results)
+  linear_mod <- lm(share_diff ~ n_candidates + n_rel_candidates + turnout,
+                  data = results)
   print(summary(linear_mod))
 
-  #' scatter(results, aes(n_rel_candidates, share_diff), saved_to = "test")
+  #' scatter(results, aes(turnout, share_diff), saved_to = "test")
 }
