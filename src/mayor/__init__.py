@@ -1,0 +1,1 @@
+from .mayor import Mayor

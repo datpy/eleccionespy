@@ -40,3 +40,5 @@ vignettes/*.pdf
 
 # Used data can be very large, don't store it in the repository.
 data/**/*
+
+*/**/__pycache__

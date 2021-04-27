@@ -1,0 +1,7 @@
+{
+    "python.pythonPath": "~/.miniconda3/envs/eleccionespy/bin/python",
+    "python.linting.pycodestyleEnabled": true,
+    "python.linting.enabled": true,
+    "python.linting.lintOnSave" : true,
+    "python.linting.pycodestyleArgs": []
+}
