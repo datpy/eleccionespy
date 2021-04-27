@@ -31,5 +31,6 @@ scatter <- function(data = NULL, mapping = aes(), title = "", xlab = "",
     labs(title = title, x = xlab, y = ylab) +
     geom_smooth(method = lm, se = FALSE, formula = y ~ x,
                 color = "#c63957") +
-    theme_electionspy()
+    theme_electionspy() +
+    geom_text_repel(aes(label = depdes), size = 3)
 }

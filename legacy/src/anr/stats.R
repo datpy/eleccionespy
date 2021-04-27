@@ -5,7 +5,9 @@ source("./src/intendentes/districtwise.R")
 source("./src/intendentes/graph.R")
 source("./src/common/graph.R")
 
-anr_mayor_statistics <- function(election_results, electoral_roll, income) {
+anr_mayor_statistics <- function(election_results, electoral_roll,
+                                 dev_indicators) {
+
   #' basepath <- "./data/output/"
 
   # Data on electoral roll is only availables since 1998, so remove the ones
@@ -29,11 +31,11 @@ anr_mayor_statistics <- function(election_results, electoral_roll, income) {
   #' anr_graph_results_vs_income(anr_mayor_results, income)
 
   #' district_level_model(mayor_results, electoral_roll)
-  dep_level_model(mayor_results, electoral_roll, income)
+  dep_level_model(mayor_results, electoral_roll, dev_indicators)
 }
 
 # Generates graphs comparing department-wise election results and income.
-anr_graph_results_vs_income <- function(mayor_results, income) {
+anr_graph_results_vs_income <- function(mayor_results, dev_indicators) {
   # Mayor vote share in 2015 vs income.
   title <- "Porcentaje de votos vs. Promedio de ingresos"
   xlab <- "Promedio de ingresos en 2017 (en millones de Gs.)"
@@ -61,8 +63,6 @@ make_vs_income_graph <- function(results, income, title, xlab, ylab,
                                  saved_to, fn) {
   results %>%
     left_join(income, c("dep" = "dep")) %>%
-    mutate(income = ingresos / 1000000) %>%
-    select(-ingresos) %>%
     fn(title, xlab, ylab, saved_to)
 }
 
@@ -111,7 +111,7 @@ anr_mayor_share_per_dep <- function(election_results, year = NULL) {
 #'
 #' This function expects that the election results and electoral roll are from
 #' a specific year.
-dep_level_model <- function(election_results, electoral_roll, income) {
+dep_level_model <- function(election_results, electoral_roll, dev_indicators) {
   anr_mayor_results <- election_results %>%
                          dplyr::filter(siglas_lista == "ANR")
 
@@ -127,14 +127,46 @@ dep_level_model <- function(election_results, electoral_roll, income) {
           inner_join(electoral_roll, c("dep" = "dep", "depdes" = "depdes")) %>%
           mutate(turnout = total_votos / eligible_voters * 100)
 
-  tb <- tb %>%
-          inner_join(income, c("dep" = "dep"))
 
-  linear_mod <- lm(vote_share ~ income + turnout,
+  indicators <- dep_process_dev_indicators(dev_indicators)
+
+  tb <- tb %>%
+          inner_join(indicators, c("dep" = "dep", "depdes" = "depdes"))
+
+  linear_mod <- lm(vote_share ~ income_2017 + turnout + poverty_2017 +
+                                nbi_2012 + adlcnt_pregnancy_2018,
                    data = tb)
   print(summary(linear_mod))
 
-  #' scatter(tb, aes(turnout, vote_share), saved_to = "test")
+  scatter(tb, aes(poverty_2017, vote_share), saved_to = "test")
+}
+
+dep_process_dev_indicators <- function(dev_indicators) {
+  nbi <- dev_indicators %>%
+                  filter(!is.na(PBRZ_NBI), anio == 2012) %>%
+                  select(dep, depdes, PBRZ_NBI) %>%
+                  rename(nbi_2012 = PBRZ_NBI)
+
+  total_poverty <- dev_indicators %>%
+                     filter(!is.na(PBRZ_PTOTL), anio == 2017) %>%
+                     select(dep, depdes, PBRZ_PTOTL) %>%
+                     rename(poverty_2017 = PBRZ_PTOTL)
+
+  income <- dev_indicators %>%
+              filter(!is.na(ECON_IMAP), anio == 2017) %>%
+              select(dep, depdes, ECON_IMAP) %>%
+              rename(income_2017 = ECON_IMAP) %>%
+              mutate(income_2017 = income_2017 / 1000000)
+
+  adlcnt_pregnancy <- dev_indicators %>%
+                        filter(!is.na("SALU_PMNV10-19"), anio == 2018) %>%
+                        select(dep, depdes, "SALU_PMNV10-19") %>%
+                        rename(adlcnt_pregnancy_2018 = "SALU_PMNV10-19")
+
+  nbi %>%
+    inner_join(total_poverty, c("dep" = "dep", "depdes" = "depdes")) %>%
+    inner_join(income, c("dep" = "dep", "depdes" = "depdes")) %>%
+    inner_join(adlcnt_pregnancy, c("dep" = "dep", "depdes" = "depdes"))
 }
 
 #' Creates a statistical model for datapoints at the district level.

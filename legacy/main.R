@@ -32,10 +32,17 @@ roll <- read_csv(file = "./data/padron-1998-2018.csv",
         select(anio, dep, depdes, dis, disdes, total) %>%
         rename(eligible_voters = total)
 
-# Import income information.
-income <- read_csv(file = "./data/ingresos-promedios-2017.csv") %>%
-            select(-anio, -depdes) %>%
-            rename(income = ingresos_act_principal) %>%
-            mutate(income = income / 1000000)
+# Import development indicators.
+dev_indicators <- read_csv(file = "./data/indicadores-desarrollo-dep.csv") %>%
+                    filter(indicador == "ECON_IMAP" |
+                           indicador == "PBRZ_PTOTL" |
+                           indicador == "PBRZ_NBI" |
+                           indicador == "SALU_PMNV10-19") %>%
+                    pivot_wider(
+                      c(anio, dep, depdes),
+                      names_from = indicador,
+                      values_from = valor
+                    ) %>%
+                    arrange(anio, dep)
 
-anr_mayor_statistics(election_results, roll, income)
+anr_mayor_statistics(election_results, roll, dev_indicators)
