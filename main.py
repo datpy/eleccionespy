@@ -1,8 +1,10 @@
 import pandas as pd
+import pathlib
 import src as eleccionespy
 
 ELECTION_RESULTS_FILE = "./data/resultados-1996-2018.csv"
 ELECTOTRAL_ROLL_FILE = "./data/padron-1998-2018.csv"
+DEV_INDICATORS_FILE = "./data/indicadores-desarrollo-dep.csv"
 
 
 def main():
@@ -16,8 +18,24 @@ def main():
     rollDf = rollDf.rename(columns={"total": "eligible_voters"})
     roll = eleccionespy.ElectoralRoll(rollDf)
 
-    anrMayor = eleccionespy.AnrMayor(electionResults, roll)
-    anrMayor.stats()
+    devIndicators = pd.read_csv(DEV_INDICATORS_FILE)
+    devIndicators = devIndicators.query(
+        "indicador == 'ECON_IMAP'"
+        "| indicador == 'PBRZ_PTOTL'"
+        "| indicador == 'PBRZ_NBI'"
+        "| indicador == 'SALU_PMNV10-19'"
+    )
+
+    stats = eleccionespy.Stats()
+
+    grapher = eleccionespy.Grapher(devIndicators, stats)
+
+    output_dir = pathlib.Path(__file__).parent
+    output_dir = output_dir.joinpath("output/graphs").absolute()
+
+    anr_mayor = eleccionespy.AnrMayor(
+        grapher, electionResults, roll, output_dir)
+    anr_mayor.stats()
 
 
 if __name__ == "__main__":

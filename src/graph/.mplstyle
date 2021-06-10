@@ -1,0 +1,74 @@
+# FONTS
+mathtext.fontset : stix
+font.family: Roboto Condensed
+font.size: 12
+font.serif: Times New Roman
+
+# AXES
+axes.titlesize:    20
+axes.titleweight:  bold
+axes.titlepad:     30
+axes.labelsize:    16
+axes.labelweight:  normal
+axes.labelpad:     20
+axes.spines.right: False
+axes.spines.top:   False
+
+# LINES
+#lines.linewidth: 1.0
+lines.markersize: 8
+lines.markerfacecolor: none
+#hatch.linewidth: 0.25
+
+# PATCHES
+patch.facecolor:   none
+patch.antialiased: True
+
+# TICKS
+xtick.bottom:        True
+xtick.major.size:    4.0
+xtick.minor.size:    2.0
+xtick.major.width:   0.5
+xtick.minor.width:   0.5
+xtick.direction:     in
+xtick.minor.visible: True
+xtick.major.top:     True
+xtick.major.bottom:  True
+xtick.minor.top:     True
+xtick.minor.bottom:  True
+xtick.major.pad:     5.0
+xtick.minor.pad:     5.0
+ytick.labelsize:     large
+
+ytick.left: True
+ytick.major.size: 4.0
+ytick.minor.size: 2.0
+ytick.major.width: 0.5
+ytick.minor.width: 0.5
+ytick.direction: in
+ytick.minor.visible: True
+ytick.major.left: True
+ytick.major.right: True
+ytick.minor.left: True
+ytick.minor.right: True
+ytick.major.pad: 5.0
+ytick.minor.pad: 5.0
+xtick.labelsize: large
+
+# LEGEND
+legend.frameon:  False
+legend.fontsize: 10
+
+# FIGURE SIZE
+figure.figsize:        10, 9.0
+figure.subplot.left:   0.125
+figure.subplot.bottom: 0.175
+figure.subplot.right:  0.95
+figure.autolayout :    False
+
+# SCATTER PLOT
+scatter.marker : o
+scatter.edgecolors : black
+
+# SAVING FIGURES
+path.simplify : True
