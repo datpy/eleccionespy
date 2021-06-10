@@ -33,8 +33,6 @@ class AnrMayor(Mayor):
 
     def stats(self):
         self.graph_results_vs_income()
-        # print(self.anrMayorResults)
-        # print(self.roll)
 
     def graph_results_vs_income(self):
         df = super().share_per_department(self.anr_mayor_results)

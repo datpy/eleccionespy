@@ -75,18 +75,10 @@ class Grapher:
         plt.yticks(ticks=ticks, labels=ylabels)
 
         # Add labels for each point.
-        texts = [
-            plt.text(
-                mergedDf.loc[i, "income_millions"],
-                mergedDf.loc[i, y_column],
-                mergedDf.loc[i, "depdes"],
-            )
-            for i in range(len(mergedDf.index))
-        ]
-        adjust_text(
-            texts,
-            force_points=(0.5, 0.5),
-            expand_points=(1.2, 1.2)
+        self.label_points(
+            mergedDf["income_millions"],
+            mergedDf[y_column],
+            mergedDf["depdes"]
         )
 
         annotation = self.stats.r_and_p_value(
@@ -96,3 +88,16 @@ class Grapher:
         ax.text(2.5, 30, annotation, fontsize=16, fontstyle="italic", c="blue")
 
         return ax.plot()
+
+    def label_points(self, x: pd.Series, y: pd.Series, labels: pd.Series):
+        """
+        For each given datapoint, add a label to it.
+        """
+
+        texts = [plt.text(x[i], y[i], labels[i]) for i in range(labels.size)]
+
+        adjust_text(
+            texts,
+            force_points=(0.5, 0.5),
+            expand_points=(1.2, 1.2)
+        )
