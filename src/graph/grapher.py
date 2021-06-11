@@ -34,12 +34,14 @@ class Grapher:
         self,
         indicator: str,
         df: pd.DataFrame,
-        y_column: str,
+        ycolumn: str,
         title: str,
         xlab: str,
         ylab: str,
-        xticksuffix: str = "",
-        yticksuffix: str = "",
+        xtick_suffix: str = "",
+        ytick_suffix: str = "",
+        xtick_ndecimals: int = 0,
+        ytick_ndecimals: int = 0,
         indicator_factor: float = 1.0,
         xlim: Tuple[int, int] = None,
         stat_cor: StatCor = {'show': False}
@@ -51,12 +53,12 @@ class Grapher:
 
         Parameters
         ----------
-        df : Dataframe
-            The dataframe that contains the dependent variable and the column
-            by which to merge the dependent and independent variables.
         indicator : String
             Development indicator variable to use as independent variable.
-        y_column: String
+        df : pandas.Dataframe
+            The dataframe that contains the dependent variable and the column
+            by which to merge the dependent and independent variables.
+        ycolumn: String
             The dependent variable's column name in dataframe.
         title: String
             The plot's title.
@@ -64,10 +66,20 @@ class Grapher:
             The x axis label.
         ylab: String
             The y axis label.
-        yticksuffix:
+        xtick_suffix: String
+            Suffix to add to the independent variable's ticks such as "%".
+        ytick_suffix: String
             Suffix to add to the dependent variable's ticks such as "%".
+        xtick_ndecimals: Int
+            Number of decimals for the ticks of the independent variable.
+        ytick_ndecimals: Int
+            Number of decimals for the ticks of the dependent variable.
         indicator_factor: Float
             Scale indicator value by this factor.
+        xlim: Tuple(Int, Int)
+            The lower and upper end of the independent variable axis.
+        stat_cor: graph.Grapher
+            Used to show (or not) correlation statistics at a given coordinate.
         """
 
         # Queries for the requested indicator and creates a pandas dataframe
@@ -84,7 +96,7 @@ class Grapher:
         # Creates regression plot.
         ax = sns.regplot(
             x=mergedDf[indicator],
-            y=mergedDf[y_column],
+            y=mergedDf[ycolumn],
             ci=None,
             scatter_kws={"fc": "none", "edgecolor": "black"},
             line_kws={"color": "red"}
@@ -94,27 +106,35 @@ class Grapher:
         if xlim:
             ax.set_xlim(xlim)
 
-        # Adds suffix to x ticks.
-        ticks = plt.yticks()[0]
-        xlabels = [f"{x:.0f}{xticksuffix}" for x in ticks]
-        plt.yticks(ticks=ticks, labels=xlabels)
+        # Adds suffix to x ticks and format them to given number of decimals.
+        ticks = plt.xticks()[0]
+        xticks, xlabels = [], []
+        for x in ticks:
+            # Only process ticks that are within the x-axis limits.
+            if x < xlim[0] or x > xlim[1]:
+                continue
 
-        # Adds suffix to y ticks.
+            xticks.append(x)
+            label = f"{x:.{xtick_ndecimals}f}{xtick_suffix}"
+            xlabels.append(label)
+        plt.xticks(ticks=xticks, labels=xlabels)
+
+        # Adds suffix to y ticks and format them to given number of decimals.
         ticks = plt.yticks()[0]
-        ylabels = [f"{y:.0f}{yticksuffix}" for y in ticks]
+        ylabels = [f"{y:.{ytick_ndecimals}f}{ytick_suffix}" for y in ticks]
         plt.yticks(ticks=ticks, labels=ylabels)
 
         # Add labels for each point.
         self.label_points(
             mergedDf[indicator],
-            mergedDf[y_column],
+            mergedDf[ycolumn],
             mergedDf["depdes"]
         )
 
         if stat_cor['show']:
             annotation = self.stats.r_and_p_value(
                 mergedDf[indicator],
-                mergedDf[y_column]
+                mergedDf[ycolumn]
             )
             ax.text(stat_cor["x_pos"], stat_cor["y_pos"], annotation,
                     fontsize=16, fontstyle="italic", c="darkblue")
@@ -134,9 +154,11 @@ class Grapher:
         """
 
         return self.make_vs_indicator_graph(
-            "ECON_IMAP", df, y_column, title, xlab, ylab, '%',
+            "ECON_IMAP", df, y_column, title, xlab, ylab,
+            ytick_suffix='%',
             indicator_factor=1/1000000,
             xlim=(1.3, 4.5),
+            xtick_ndecimals=1,
             stat_cor={'show': True, 'x_pos': 2.5, 'y_pos': 30}
         )
 
@@ -153,8 +175,8 @@ class Grapher:
 
         return self.make_vs_indicator_graph(
             "PBRZ_PTOTL", df, y_column, title, xlab, ylab,
-            xticksuffix='%', yticksuffix='%',
-            xlim=(10, 50),
+            xtick_suffix='%', ytick_suffix='%',
+            xlim=(11, 50),
             stat_cor={'show': True, 'x_pos': 26, 'y_pos': 35}
         )
 
