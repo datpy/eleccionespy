@@ -8,6 +8,11 @@ from ..graph import Grapher
 
 
 class AnrMayor(Mayor):
+    """
+    AnrMayor handles statistics and graphs on ANR performance on mayor
+    elections.
+    """
+
     def __init__(
         self,
         grapher: Grapher,
@@ -25,25 +30,49 @@ class AnrMayor(Mayor):
         )
         self.output_dir = output_dir
 
-        print(self.output_dir)
-
         # Use electoral roll for the general elections as proxy for the local
         # ones.
         self.roll = roll.voters_by_district(2018)
 
     def stats(self):
-        self.graph_results_vs_income()
+        share_per_dep = self.share_per_department(self.anr_mayor_results)
+        self.graph_results_vs_income(share_per_dep)
+        self.graph_results_vs_poverty(share_per_dep)
 
-    def graph_results_vs_income(self):
-        df = super().share_per_department(self.anr_mayor_results)
+    def graph_results_vs_income(self, share_per_dep: pd.DataFrame):
         title = "Porcentaje de votos vs. Promedio de ingresos"
         xlab = "Promedio de ingresos en 2017 (en millones de Gs.)"
         ylab = "Porcentaje de votos en 2015 (intendencia)"
 
         axes = self.grapher.make_vs_income_graph(
-                    df, "vote_percent", title, xlab, ylab, yticksuffix="%")
+                    share_per_dep,
+                    "vote_percent",
+                    title,
+                    xlab,
+                    ylab
+                )
 
         plt.plot(axes)
         plt.savefig(
             self.output_dir.joinpath("2015-voteshare_per_dep-vs-income")
         )
+        plt.close()
+
+    def graph_results_vs_poverty(self, share_per_dep: pd.DataFrame):
+        title = "Porcentaje de votos vs. Porcentaje de pobreza total"
+        xlab = "Porcentaje de personas en pobreza total"
+        ylab = "Porcentaje de votos en 2015 (intendencia)"
+
+        ax = self.grapher.make_vs_poverty_graph(
+                    share_per_dep,
+                    "vote_percent",
+                    title,
+                    xlab,
+                    ylab
+                )
+
+        plt.plot(ax)
+        plt.savefig(
+            self.output_dir.joinpath("2015-voteshare_per_dep-vs-poverty")
+        )
+        plt.close()
