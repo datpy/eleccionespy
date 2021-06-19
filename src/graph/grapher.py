@@ -75,23 +75,15 @@ class Grapher:
         ytick_ndecimals: Int
             Number of decimals for the ticks of the dependent variable.
         indicator_factor: Float
-            Scale indicator value by this factor.
+            The factor by which to scale the indicator.
         xlim: Tuple(Int, Int)
             The lower and upper end of the independent variable axis.
         stat_cor: graph.Grapher
             Used to show (or not) correlation statistics at a given coordinate.
         """
 
-        # Queries for the requested indicator and creates a pandas dataframe
-        # with dev_indicator as a column that contains the indicator's values.
-        #
-        # The values are then divided by the provided factor.
-        dev_ind = self.devIndicators.query(f"indicador == '{indicator}'")
-        dev_ind = dev_ind[["dep", "valor"]]
-        dev_ind = dev_ind.rename(columns={"valor": indicator})
-        dev_ind[indicator] = dev_ind[indicator] * indicator_factor
-
-        mergedDf = df.merge(dev_ind, on="dep")
+        mergedDf = self.__mergeVariablesDataframes(
+            indicator, df, indicator_factor)
 
         # Creates regression plot.
         ax = sns.regplot(
@@ -125,7 +117,7 @@ class Grapher:
         plt.yticks(ticks=ticks, labels=ylabels)
 
         # Add labels for each point.
-        self.label_points(
+        self.__label_points(
             mergedDf[indicator],
             mergedDf[ycolumn],
             mergedDf["depdes"]
@@ -180,7 +172,39 @@ class Grapher:
             stat_cor={'show': True, 'x_pos': 26, 'y_pos': 35}
         )
 
-    def label_points(self, x: pd.Series, y: pd.Series, labels: pd.Series):
+    def __mergeVariablesDataframes(
+        self,
+        indicator: str,
+        df: pd.DataFrame,
+        indicator_factor: float = 1.0
+    ) -> pd.DataFrame:
+
+        """
+        Queries for the requested indicator and creates a pandas dataframe
+        with the indicator as a column. The column contains the indicator's
+        values.
+
+        The values are then divided by the provided factor and merge with the
+        given Dataframe.
+
+        Parameters
+        ----------
+        indicator : String
+            Development indicator variable to be merged.
+        df : pandas.Dataframe
+            The dataframe with which to merge.
+        indicator_factor: Float
+            The factor by which to scale the indicator.
+        """
+
+        dev_ind = self.devIndicators.query(f"indicador == '{indicator}'")
+        dev_ind = dev_ind[["dep", "valor"]]
+        dev_ind = dev_ind.rename(columns={"valor": indicator})
+        dev_ind[indicator] = dev_ind[indicator] * indicator_factor
+
+        return df.merge(dev_ind, on="dep")
+
+    def __label_points(self, x: pd.Series, y: pd.Series, labels: pd.Series):
         """
         For each given datapoint, add a label to it.
         """
