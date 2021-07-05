@@ -127,6 +127,7 @@ dep_level_model <- function(election_results, electoral_roll, dev_indicators) {
           inner_join(electoral_roll, c("dep" = "dep", "depdes" = "depdes")) %>%
           mutate(turnout = total_votos / eligible_voters * 100)
 
+  print(tb)
 
   indicators <- dep_process_dev_indicators(dev_indicators)
 

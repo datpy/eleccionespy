@@ -1,7 +1,7 @@
 library(dplyr)
 library(tidyverse)
 
-setwd("~/Data/Elecciones/eleccionespy")
+setwd("~/Data/Elecciones/eleccionespy/legacy")
 
 source("./src/anr/stats.R")
 
@@ -21,19 +21,19 @@ roll_col_types <- cols(
   locdes = col_character()
 )
 
-election_results <- read_csv(file = "./data/resultados-1996-2018.csv",
+election_results <- read_csv(file = "../data/resultados-1996-2018.csv",
                             col_types = elec_col_types) %>%
                     select(anio, dep, depdes, dis, disdes, zon, loc, cand_desc,
                            siglas_lista, votos, total_votos)
 
 # Electoral roll for elections 1998-2018.
-roll <- read_csv(file = "./data/padron-1998-2018.csv",
+roll <- read_csv(file = "../data/padron-1998-2018.csv",
                  col_types = roll_col_types) %>%
         select(anio, dep, depdes, dis, disdes, total) %>%
         rename(eligible_voters = total)
 
 # Import development indicators.
-dev_indicators <- read_csv(file = "./data/indicadores-desarrollo-dep.csv") %>%
+dev_indicators <- read_csv(file = "../data/indicadores-desarrollo-dep.csv") %>%
                     filter(indicador == "ECON_IMAP" |
                            indicador == "PBRZ_PTOTL" |
                            indicador == "PBRZ_NBI" |
