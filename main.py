@@ -8,33 +8,35 @@ DEV_INDICATORS_FILE = "./data/indicadores-desarrollo-dep.csv"
 
 
 def main():
-    electionResults = pd.read_csv(ELECTION_RESULTS_FILE)
-    electionResults = electionResults[["anio", "dep", "depdes", "dis",
-                                       "disdes", "zon", "loc", "cand_desc",
-                                       "siglas_lista", "votos", "total_votos"]]
+    election_results = pd.read_csv(ELECTION_RESULTS_FILE)
+    election_results = election_results[["anio", "dep", "depdes", "dis",
+                                         "disdes", "zon", "loc", "cand_desc",
+                                         "siglas_lista", "votos",
+                                         "total_votos"]]
 
-    rollDf = pd.read_csv(ELECTOTRAL_ROLL_FILE)
-    rollDf = rollDf[["anio", "dep", "depdes", "dis", "disdes", "total"]]
-    rollDf = rollDf.rename(columns={"total": "eligible_voters"})
-    roll = eleccionespy.ElectoralRoll(rollDf)
+    roll_df = pd.read_csv(ELECTOTRAL_ROLL_FILE)
+    roll_df = roll_df[["anio", "dep", "depdes", "dis", "disdes", "total"]]
+    roll_df = roll_df.rename(columns={"total": "eligible_voters"})
+    roll = eleccionespy.ElectoralRoll(roll_df)
 
-    devIndicators = pd.read_csv(DEV_INDICATORS_FILE)
-    devIndicators = devIndicators.query(
-        "indicador == 'ECON_IMAP'"
-        "| indicador == 'PBRZ_PTOTL'"
-        "| indicador == 'PBRZ_NBI'"
-        "| indicador == 'SALU_PMNV10-19'"
+    dev_indicators_df = pd.read_csv(DEV_INDICATORS_FILE)
+    dev_indicators_df = dev_indicators_df.query(
+        "indicator == 'ECON_IMAP'"
+        "| indicator == 'PBRZ_PTOTL'"
+        "| indicator == 'PBRZ_NBI'"
+        "| indicator == 'SALU_PMNV10-19'"
     )
+    dev_indicators = eleccionespy.DevelopmentIndicators(dev_indicators_df)
 
     stats = eleccionespy.Stats()
 
-    grapher = eleccionespy.Grapher(devIndicators, stats)
+    grapher = eleccionespy.Grapher(dev_indicators, stats)
 
     output_dir = pathlib.Path(__file__).parent
     output_dir = output_dir.joinpath("output/graphs").absolute()
 
     anr_mayor = eleccionespy.AnrMayor(
-        grapher, electionResults, roll, output_dir)
+        grapher, election_results, roll, dev_indicators, output_dir)
     anr_mayor.stats()
 
 

@@ -58,5 +58,5 @@ class DevelopmentIndicators:
                 result, how="right", on=["dep", "depdes"])
             self.__df = self.__df.rename(columns={"value": indicator})
 
-    def to_dataframe(self):
+    def to_dataframe(self) -> pd.DataFrame:
         return self.__df

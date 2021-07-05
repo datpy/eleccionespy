@@ -1,3 +1,4 @@
+from src.dev_indicators.indicators import DevelopmentIndicators
 import matplotlib.pyplot as plt
 import pandas as pd
 import pathlib
@@ -13,44 +14,67 @@ class AnrMayor(Mayor):
     elections.
     """
 
+    output_dir: pathlib.Path
+    __mayor_results: pd.DataFrame
+    __anr_mayor_results: pd.DataFrame
+    __grapher: Grapher
+    __roll: pd.DataFrame
+    __dev_indicators: DevelopmentIndicators
+
     def __init__(
         self,
         grapher: Grapher,
         election_results: pd.DataFrame,
         roll: ElectoralRoll,
+        dev_indicators: DevelopmentIndicators,
         output_dir: pathlib.Path,
     ):
 
-        self.grapher = grapher
+        self.__grapher = grapher
+        self.__dev_indicators = dev_indicators
 
         query = "cand_desc == 'INTENDENTE' & anio == 2015"
-        self.mayor_results = election_results.query(query)
-        self.anr_mayor_results = self.mayor_results.query(
+        self.__mayor_results = election_results.query(query)
+        self.__anr_mayor_results = self.__mayor_results.query(
             "siglas_lista == 'ANR'"
         )
         self.output_dir = output_dir
 
         # Use electoral roll for the general elections as proxy for the local
         # ones.
-        self.roll = roll.voters_by_district(2018)
+        self.__roll = roll.voters_by_district(2018)
 
     def stats(self):
-        share_per_dep = self.share_per_department(self.anr_mayor_results)
-        self.graph_results_vs_income(share_per_dep)
-        self.graph_results_vs_poverty(share_per_dep)
+        share_per_dep = self.share_per_department(self.__anr_mayor_results)
+        # self.__graph_results_vs_income(share_per_dep)
+        # self.__graph_results_vs_poverty(share_per_dep)
+        # self.__departmentwise_model(share_per_dep)
 
-    def graph_results_vs_income(self, share_per_dep: pd.DataFrame):
+    def __departmentwise_model(self, share_per_dep: pd.DataFrame):
+        """
+        Creates a statistical model for datapoints at the department level.
+        """
+
+        # Gets electoral roll at the department level.
+        df = self.__roll.groupby(["dep", "depdes"]).agg({
+            "eligible_voters": "sum",
+        }).reset_index()
+
+        # share_per_dep includes votes for ANR, total votes, and vote share for
+        # ANR.
+        df = df.merge(share_per_dep, on=["dep", "depdes"])
+
+        df["turnout"] = df["total_votos"] / df["eligible_voters"]
+        print(df)
+
+    def __graph_results_vs_income(self, share_per_dep: pd.DataFrame):
         title = "Porcentaje de votos vs. Promedio de ingresos"
         xlab = "Promedio de ingresos en 2017 (en millones de Gs.)"
         ylab = "Porcentaje de votos en 2015 (intendencia)"
 
-        axes = self.grapher.make_vs_income_graph(
-                    share_per_dep,
-                    "vote_percent",
-                    title,
-                    xlab,
-                    ylab
-                )
+        axes = \
+            self.__grapher.make_vs_income_graph(
+                share_per_dep, "vote_percent", title, xlab, ylab)
 
         plt.plot(axes)
         plt.savefig(
@@ -58,18 +82,14 @@ class AnrMayor(Mayor):
         )
         plt.close()
 
-    def graph_results_vs_poverty(self, share_per_dep: pd.DataFrame):
+    def __graph_results_vs_poverty(self, share_per_dep: pd.DataFrame):
         title = "Porcentaje de votos vs. Porcentaje de pobreza total"
         xlab = "Porcentaje de personas en pobreza total"
         ylab = "Porcentaje de votos en 2015 (intendencia)"
 
-        ax = self.grapher.make_vs_poverty_graph(
-                    share_per_dep,
-                    "vote_percent",
-                    title,
-                    xlab,
-                    ylab
-                )
+        ax = \
+            self.__grapher.make_vs_poverty_graph(
+                share_per_dep, "vote_percent", title, xlab, ylab)
 
         plt.plot(ax)
         plt.savefig(

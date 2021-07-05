@@ -1,6 +1,5 @@
 import pathlib
 from typing import Tuple, TypedDict
-from numpy import float128
 
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -8,6 +7,7 @@ import seaborn as sns
 
 from adjustText import adjust_text
 from ..stats import Stats
+from ..dev_indicators import DevelopmentIndicators
 
 
 class StatCor(TypedDict):
@@ -22,10 +22,17 @@ class Grapher:
     variables in the development indicators dataframe.
     """
 
-    def __init__(self, devIndicators: pd.DataFrame, stats: Stats) -> None:
-        self.devIndicators = devIndicators
-        self.income = devIndicators.query("indicador == 'ECON_IMAP'")
-        self.stats = stats
+    __dev_indicators: pd.DataFrame
+    __stats: Stats
+
+    def __init__(
+        self,
+        dev_indicators: DevelopmentIndicators,
+        stats: Stats
+    ) -> None:
+
+        self.__dev_indicators = dev_indicators.to_dataframe()
+        self.__stats = stats
 
         style = str(pathlib.Path(__file__).parent) + "/.mplstyle"
         plt.style.use(style)
@@ -82,17 +89,17 @@ class Grapher:
             Used to show (or not) correlation statistics at a given coordinate.
         """
 
-        mergedDf = self.__mergeVariablesDataframes(
-            indicator, df, indicator_factor)
+        mergedDf = \
+            self.__mergeVariablesDataframes(indicator, df, indicator_factor)
 
         # Creates regression plot.
-        ax = sns.regplot(
-            x=mergedDf[indicator],
-            y=mergedDf[ycolumn],
-            ci=None,
-            scatter_kws={"fc": "none", "edgecolor": "black"},
-            line_kws={"color": "red"}
-        )
+        ax = \
+            sns.regplot(
+                x=mergedDf[indicator],
+                y=mergedDf[ycolumn],
+                ci=None,
+                scatter_kws={"fc": "none", "edgecolor": "black"},
+                line_kws={"color": "red"})
         ax.set(xlabel=xlab, ylabel=ylab, title=title)
 
         if xlim:
@@ -124,7 +131,7 @@ class Grapher:
         )
 
         if stat_cor['show']:
-            annotation = self.stats.r_and_p_value(
+            annotation = self.__stats.r_and_p_value(
                 mergedDf[indicator],
                 mergedDf[ycolumn]
             )
@@ -180,12 +187,8 @@ class Grapher:
     ) -> pd.DataFrame:
 
         """
-        Queries for the requested indicator and creates a pandas dataframe
-        with the indicator as a column. The column contains the indicator's
-        values.
-
-        The values are then divided by the provided factor and merge with the
-        given Dataframe.
+        Multiply the selected indicator by the given factor. The result is then
+        merge with the given dataframe.
 
         Parameters
         ----------
@@ -196,13 +199,9 @@ class Grapher:
         indicator_factor: Float
             The factor by which to scale the indicator.
         """
-
-        dev_ind = self.devIndicators.query(f"indicador == '{indicator}'")
-        dev_ind = dev_ind[["dep", "valor"]]
-        dev_ind = dev_ind.rename(columns={"valor": indicator})
+        dev_ind = self.__dev_indicators
         dev_ind[indicator] = dev_ind[indicator] * indicator_factor
-
-        return df.merge(dev_ind, on="dep")
+        return df.merge(dev_ind, on=["dep", "depdes"])
 
     def __label_points(self, x: pd.Series, y: pd.Series, labels: pd.Series):
         """
