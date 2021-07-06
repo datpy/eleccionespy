@@ -60,3 +60,6 @@ class DevelopmentIndicators:
 
     def to_dataframe(self) -> pd.DataFrame:
         return self.__df
+
+    def get_columns(self) -> t.List:
+        return self.__columns

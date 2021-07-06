@@ -1,8 +1,9 @@
-from src.dev_indicators.indicators import DevelopmentIndicators
 import matplotlib.pyplot as plt
 import pandas as pd
 import pathlib
+import statsmodels.api as sm
 
+from ..dev_indicators import DevelopmentIndicators
 from ..mayor import Mayor
 from ..roll import ElectoralRoll
 from ..graph import Grapher
@@ -48,7 +49,7 @@ class AnrMayor(Mayor):
         share_per_dep = self.share_per_department(self.__anr_mayor_results)
         # self.__graph_results_vs_income(share_per_dep)
         # self.__graph_results_vs_poverty(share_per_dep)
-        # self.__departmentwise_model(share_per_dep)
+        self.__departmentwise_model(share_per_dep)
 
     def __departmentwise_model(self, share_per_dep: pd.DataFrame):
         """
@@ -63,9 +64,22 @@ class AnrMayor(Mayor):
         # share_per_dep includes votes for ANR, total votes, and vote share for
         # ANR.
         df = df.merge(share_per_dep, on=["dep", "depdes"])
+        df["turnout"] = df["total_votos"] / df["eligible_voters"] * 100
 
-        df["turnout"] = df["total_votos"] / df["eligible_voters"]
+        df = df.merge(
+            self.__dev_indicators.to_dataframe(), on=["dep", "depdes"])
+
+        # Put average income in millions.
+        df["ECON_IMAP"] = df["ECON_IMAP"] / 1e6
+
+        # Set the independent variables.
+        ind_variables = self.__dev_indicators.get_columns()
+        ind_variables.append("turnout")
+        X = sm.add_constant(df[ind_variables])
+
         print(df)
+        model = sm.OLS(df["vote_percent"], X).fit()
+        print(model.summary())
 
     def __graph_results_vs_income(self, share_per_dep: pd.DataFrame):
         title = "Porcentaje de votos vs. Promedio de ingresos"
