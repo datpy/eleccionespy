@@ -19,20 +19,23 @@ class AnrMayor(Mayor):
     __mayor_results: pd.DataFrame
     __anr_mayor_results: pd.DataFrame
     __grapher: Grapher
-    __roll: pd.DataFrame
+    __turnout: pd.DataFrame
     __dev_indicators: DevelopmentIndicators
 
     def __init__(
         self,
         grapher: Grapher,
         election_results: pd.DataFrame,
-        roll: ElectoralRoll,
+        turnout: pd.DataFrame,
         dev_indicators: DevelopmentIndicators,
         output_dir: pathlib.Path,
     ):
 
         self.__grapher = grapher
         self.__dev_indicators = dev_indicators
+
+        query = "cand_desc == 'INTENDENTE'"
+        self.__turnout = turnout.query(query)
 
         query = "cand_desc == 'INTENDENTE' & anio == 2015"
         self.__mayor_results = election_results.query(query)
@@ -41,35 +44,33 @@ class AnrMayor(Mayor):
         )
         self.output_dir = output_dir
 
-        # Use electoral roll for the general elections as proxy for the local
-        # ones.
-        self.__roll = roll.voters_by_district(2018)
-
     def stats(self):
         share_per_dep = self.share_per_department(self.__anr_mayor_results)
+        share_per_district = self.share_per_district(self.__anr_mayor_results)
         # self.__graph_results_vs_income(share_per_dep)
         # self.__graph_results_vs_poverty(share_per_dep)
         self.__departmentwise_model(share_per_dep)
+        # self.__districtwise_model(share_per_district)
 
     def __departmentwise_model(self, share_per_dep: pd.DataFrame):
         """
         Creates a statistical model for datapoints at the department level.
         """
-
-        # Gets electoral roll at the department level.
-        df = self.__roll.groupby(["dep", "depdes"]).agg({
+        # Get vote turnout at the department level.
+        df = self.__turnout.groupby(["dep", "depdes"]).aggregate({
             "eligible_voters": "sum",
-        }).reset_index()
+            "total_votes": "sum",
+        })
 
         # share_per_dep includes votes for ANR, total votes, and vote share for
         # ANR.
         df = df.merge(share_per_dep, on=["dep", "depdes"])
-        df["turnout"] = df["total_votos"] / df["eligible_voters"] * 100
+        df["turnout"] = df["total_votes"] / df["eligible_voters"] * 100
 
         df = df.merge(
             self.__dev_indicators.to_dataframe(), on=["dep", "depdes"])
 
-        # Put average income in millions.
+        # Set average income in millions.
         df["ECON_IMAP"] = df["ECON_IMAP"] / 1e6
 
         # Set the independent variables.
@@ -80,6 +81,12 @@ class AnrMayor(Mayor):
         print(df)
         model = sm.OLS(df["vote_percent"], X).fit()
         print(model.summary())
+
+    def __districtwise_model(self, share_per_district: pd.DataFrame):
+        """
+        Creates a statistical model for datapoints at the distric level.
+        """
+        print(share_per_district)
 
     def __graph_results_vs_income(self, share_per_dep: pd.DataFrame):
         title = "Porcentaje de votos vs. Promedio de ingresos"

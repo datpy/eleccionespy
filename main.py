@@ -3,7 +3,7 @@ import pathlib
 import src as eleccionespy
 
 ELECTION_RESULTS_FILE = "./data/resultados-1996-2018.csv"
-ELECTOTRAL_ROLL_FILE = "./data/padron-1998-2018.csv"
+TURNOUT_2015_FILE = "./data/2015-districtwise-turnout.csv"
 DEV_INDICATORS_FILE = "./data/indicadores-desarrollo-dep.csv"
 
 
@@ -14,10 +14,11 @@ def main():
                                          "siglas_lista", "votos",
                                          "total_votos"]]
 
-    roll_df = pd.read_csv(ELECTOTRAL_ROLL_FILE)
-    roll_df = roll_df[["anio", "dep", "depdes", "dis", "disdes", "total"]]
-    roll_df = roll_df.rename(columns={"total": "eligible_voters"})
-    roll = eleccionespy.ElectoralRoll(roll_df)
+    turnout = pd.read_csv(TURNOUT_2015_FILE)
+    turnout = turnout[["cand_desc", "dep", "depdes", "dis",
+                       "disdes", "electores", "total"]]
+    turnout = turnout.rename(columns={
+        "electores": "eligible_voters", "total": "total_votes"})
 
     dev_indicators_df = pd.read_csv(DEV_INDICATORS_FILE)
     dev_indicators_df = dev_indicators_df.query(
@@ -36,7 +37,7 @@ def main():
     output_dir = output_dir.joinpath("output/graphs").absolute()
 
     anr_mayor = eleccionespy.AnrMayor(
-        grapher, election_results, roll, dev_indicators, output_dir)
+        grapher, election_results, turnout, dev_indicators, output_dir)
     anr_mayor.stats()
 
 
